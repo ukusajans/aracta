@@ -6,6 +6,7 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export const unstable_settings = {
+  // Başlangıç rotası hatalarını önlemek için
   anchor: '(tabs)',
 };
 
@@ -15,8 +16,14 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        {/* Giriş Ekranı (Header Gizli) */}
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        
+        {/* Ana Uygulama Sekmeleri (Header Gizli) */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        
+        {/* Modal Ekranı */}
+        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Bilgi' }} />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

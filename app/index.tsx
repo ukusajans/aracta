@@ -3,16 +3,16 @@ import axios from 'axios';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 // API Adresiniz
@@ -26,7 +26,7 @@ export default function LoginScreen() {
   // Form Verileri
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState(''); // Sadece kayıt için
+  const [fullName, setFullName] = useState('');
 
   // İşlem Fonksiyonu
   const handleAuth = async () => {
@@ -55,24 +55,21 @@ export default function LoginScreen() {
 
       const data = response.data;
 
-      // PHP'den gelen cevabı kontrol et (Başarılı mı?)
-      // Not: API cevabınıza göre burayı düzenleyebilirsiniz. Genelde "success": true döner.
       if (data.success || data.durum === 'basarili' || data.id) { 
         if (isLogin) {
-          // Giriş Başarılı -> Ana Sayfaya Git
+          // Giriş Başarılı -> Ana Sayfaya Yönlendir ve Geçmişi Sil (Replace)
           router.replace('/(tabs)'); 
         } else {
-          // Kayıt Başarılı -> Giriş Moduna Geç
           Alert.alert('Başarılı', 'Kayıt oluşturuldu, şimdi giriş yapabilirsiniz.');
           setIsLogin(true);
         }
       } else {
-        Alert.alert('Hata', data.mesaj || 'Bir sorun oluştu.');
+        Alert.alert('Hata', data.mesaj || 'Kullanıcı adı veya şifre hatalı.');
       }
 
     } catch (error) {
       console.error(error);
-      Alert.alert('Bağlantı Hatası', 'Sunucuya bağlanılamadı. İnternetinizi kontrol edin.');
+      Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamadı. Lütfen internetinizi kontrol edin.');
     } finally {
       setLoading(false);
     }
@@ -85,10 +82,8 @@ export default function LoginScreen() {
     >
       <StatusBar barStyle="dark-content" />
       
-      {/* Üst Logo ve Başlık Alanı */}
       <View style={styles.header}>
         <View style={styles.logoContainer}>
-            {/* Logo Resminiz Varsa Buraya Ekleyebilirsiniz */}
             <Ionicons name="car-sport" size={64} color="#2563EB" />
         </View>
         <Text style={styles.title}>Araçta</Text>
@@ -97,10 +92,8 @@ export default function LoginScreen() {
         </Text>
       </View>
 
-      {/* Form Alanı */}
       <View style={styles.form}>
         
-        {/* Ad Soyad (Sadece Kayıt Modunda) */}
         {!isLogin && (
           <View style={styles.inputContainer}>
             <Ionicons name="person-outline" size={20} color="#666" style={styles.icon} />
@@ -110,11 +103,11 @@ export default function LoginScreen() {
               value={fullName}
               onChangeText={setFullName}
               placeholderTextColor="#999"
+              autoCorrect={false}
             />
           </View>
         )}
 
-        {/* E-posta */}
         <View style={styles.inputContainer}>
           <Ionicons name="mail-outline" size={20} color="#666" style={styles.icon} />
           <TextInput
@@ -124,11 +117,11 @@ export default function LoginScreen() {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoCorrect={false}
             placeholderTextColor="#999"
           />
         </View>
 
-        {/* Şifre */}
         <View style={styles.inputContainer}>
           <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.icon} />
           <TextInput
@@ -141,7 +134,6 @@ export default function LoginScreen() {
           />
         </View>
 
-        {/* Buton */}
         <TouchableOpacity 
           style={styles.button} 
           onPress={handleAuth}
@@ -156,7 +148,6 @@ export default function LoginScreen() {
           )}
         </TouchableOpacity>
 
-        {/* Alt Link (Giriş/Kayıt Değiştir) */}
         <TouchableOpacity 
           style={styles.switchButton} 
           onPress={() => setIsLogin(!isLogin)}
@@ -177,7 +168,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6', // Açık gri arka plan
+    backgroundColor: '#F3F4F6',
     justifyContent: 'center',
     padding: 24,
   },
@@ -188,7 +179,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 100,
     height: 100,
-    backgroundColor: '#DBEAFE', // Açık mavi daire
+    backgroundColor: '#DBEAFE',
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
@@ -230,7 +221,7 @@ const styles = StyleSheet.create({
     color: '#1F2937',
   },
   button: {
-    backgroundColor: '#2563EB', // Ana mavi renk
+    backgroundColor: '#2563EB',
     height: 56,
     borderRadius: 12,
     justifyContent: 'center',
