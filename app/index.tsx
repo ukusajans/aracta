@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -18,34 +19,33 @@ import {
   View
 } from 'react-native';
 
-// Ekran genişliğini alalım
-const { width } = Dimensions.get('window');
+// Ekran boyutlarını alalım
+const { width, height } = Dimensions.get('window');
 
-// API Adresiniz
+// API Adresi
 const API_URL = 'https://aracta.com.tr/api';
 
 export default function LoginScreen() {
   const router = useRouter();
   
   // State Yönetimi
-  const [isLogin, setIsLogin] = useState(true); // Giriş / Kayıt modu
+  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // Şifre göster/gizle
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form Verileri
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
 
-  // --- Backend İşlemleri (Giriş/Kayıt) ---
+  // --- Auth İşlemleri ---
   const handleAuth = async () => {
     if (!email || !password) {
-      Alert.alert('Eksik Bilgi', 'Lütfen e-posta ve şifrenizi giriniz.');
+      Alert.alert('Eksik Bilgi', 'Lütfen tüm alanları doldurunuz.');
       return;
     }
-
     if (!isLogin && !fullName) {
-      Alert.alert('Eksik Bilgi', 'Kayıt olmak için lütfen adınızı giriniz.');
+      Alert.alert('Eksik Bilgi', 'Lütfen adınızı giriniz.');
       return;
     }
 
@@ -57,305 +57,337 @@ export default function LoginScreen() {
         ? { email, password }
         : { full_name: fullName, email, password };
 
-      // API İsteği
       const response = await axios.post(`${API_URL}${endpoint}`, payload, {
         headers: { 'Content-Type': 'application/json' },
       });
 
       const data = response.data;
 
-      // Başarılı yanıt kontrolü
-      if (data.success || data.durum === 'basarili' || data.id) { 
+      if (data.success || data.durum === 'basarili' || data.id) {
         if (isLogin) {
-          // Giriş Başarılı -> Ana Sayfaya Yönlendir
-          router.replace('/(tabs)'); 
+          router.replace('/(tabs)');
         } else {
-          Alert.alert('Kayıt Başarılı', 'Hesabınız oluşturuldu, şimdi giriş yapabilirsiniz.');
-          setIsLogin(true); // Giriş ekranına dön
+          Alert.alert('Tebrikler!', 'Aramıza hoş geldin. Şimdi giriş yapabilirsin.');
+          setIsLogin(true);
         }
       } else {
-        Alert.alert('Hata', data.mesaj || 'Giriş yapılamadı, bilgileri kontrol edin.');
+        Alert.alert('Hata', data.mesaj || 'İşlem başarısız oldu.');
       }
-
     } catch (error) {
       console.error(error);
-      Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamadı. İnternetinizi kontrol edin.');
+      Alert.alert('Bağlantı Hatası', 'Sunucuya ulaşılamadı.');
     } finally {
       setLoading(false);
     }
   };
 
-  // --- Sosyal Medya ve Diğer İşlemler (Placeholder) ---
-  const handleSocialLogin = (platform: string) => {
-    Alert.alert(platform, `${platform} ile giriş özelliği çok yakında eklenecek!`);
-  };
-
-  const handleForgotPassword = () => {
-    Alert.alert('Şifremi Unuttum', 'Şifre sıfırlama bağlantısı e-posta adresinize gönderilecek (Backend entegrasyonu gerekir).');
-  };
-
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
-      
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        
-        {/* --- Header & Logo Alanı --- */}
-        <View style={styles.headerContainer}>
-          <View style={styles.logoShadow}>
-            <Image 
-              source={require('@/assets/images/logo.webp')} 
-              style={styles.logo}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={styles.welcomeText}>
-            {isLogin ? 'Tekrar Hoş Geldiniz' : 'Hesap Oluştur'}
-          </Text>
-          <Text style={styles.subText}>
-            {isLogin ? 'Devam etmek için giriş yapın' : 'Aramıza katılmak için formu doldurun'}
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" />
 
-        {/* --- Form Alanı --- */}
-        <View style={styles.formContainer}>
+      {/* --- Üst Arka Plan (Gradient & Logo) --- */}
+      <LinearGradient
+        colors={['#1E3A8A', '#2563EB', '#60A5FA']} // Koyu Maviden Açığa
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerBackground}
+      >
+        <View style={styles.logoArea}>
+          <Image 
+            source={require('@/assets/images/logo.webp')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.brandName}>Araçta</Text>
+          <Text style={styles.brandSlogan}>Aracınızın Dijital Asistanı</Text>
+        </View>
+      </LinearGradient>
+
+      {/* --- Alt Beyaz Alan (Form) --- */}
+      <View style={styles.formSection}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
-          {/* Ad Soyad (Sadece Kayıt Modunda) */}
-          {!isLogin && (
+          {/* Giriş / Kayıt Seçici (Segmented Control) */}
+          <View style={styles.toggleContainer}>
+            <TouchableOpacity 
+              style={[styles.toggleButton, isLogin && styles.activeToggle]} 
+              onPress={() => setIsLogin(true)}
+            >
+              <Text style={[styles.toggleText, isLogin && styles.activeToggleText]}>Giriş Yap</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.toggleButton, !isLogin && styles.activeToggle]} 
+              onPress={() => setIsLogin(false)}
+            >
+              <Text style={[styles.toggleText, !isLogin && styles.activeToggleText]}>Kayıt Ol</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Başlık */}
+          <Text style={styles.welcomeTitle}>
+            {isLogin ? 'Tekrar Hoş Geldiniz' : 'Hesap Oluşturun'}
+          </Text>
+          <Text style={styles.welcomeSub}>
+            {isLogin ? 'Devam etmek için bilgilerinizi girin.' : 'Avantajlardan yararlanmak için formu doldurun.'}
+          </Text>
+
+          {/* Form Alanları */}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            
+            {/* Ad Soyad (Sadece Kayıt) */}
+            {!isLogin && (
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person" size={20} color="#64748B" style={styles.inputIcon} />
+                <TextInput
+                  placeholder="Ad Soyad"
+                  style={styles.input}
+                  placeholderTextColor="#94A3B8"
+                  value={fullName}
+                  onChangeText={setFullName}
+                />
+              </View>
+            )}
+
+            {/* E-posta */}
             <View style={styles.inputWrapper}>
-              <Ionicons name="person" size={20} color="#64748B" style={styles.inputIcon} />
+              <Ionicons name="mail" size={20} color="#64748B" style={styles.inputIcon} />
               <TextInput
-                placeholder="Ad Soyad"
+                placeholder="E-posta Adresi"
                 style={styles.input}
-                value={fullName}
-                onChangeText={setFullName}
                 placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
-          )}
 
-          {/* E-posta */}
-          <View style={styles.inputWrapper}>
-            <Ionicons name="mail" size={20} color="#64748B" style={styles.inputIcon} />
-            <TextInput
-              placeholder="E-posta Adresi"
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#94A3B8"
-            />
-          </View>
-
-          {/* Şifre */}
-          <View style={styles.inputWrapper}>
-            <Ionicons name="lock-closed" size={20} color="#64748B" style={styles.inputIcon} />
-            <TextInput
-              placeholder="Şifre"
-              style={styles.input}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              placeholderTextColor="#94A3B8"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons 
-                name={showPassword ? "eye-off" : "eye"} 
-                size={22} 
-                color="#64748B" 
+            {/* Şifre */}
+            <View style={styles.inputWrapper}>
+              <Ionicons name="lock-closed" size={20} color="#64748B" style={styles.inputIcon} />
+              <TextInput
+                placeholder="Şifre"
+                style={styles.input}
+                placeholderTextColor="#94A3B8"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
               />
-            </TouchableOpacity>
-          </View>
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color="#64748B" />
+              </TouchableOpacity>
+            </View>
 
-          {/* Şifremi Unuttum (Sadece Giriş Modunda) */}
-          {isLogin && (
-            <TouchableOpacity 
-              style={styles.forgotPasswordButton}
-              onPress={handleForgotPassword}
-            >
-              <Text style={styles.forgotPasswordText}>Şifremi Unuttum?</Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Ana Buton (Giriş / Kayıt) */}
-          <TouchableOpacity 
-            style={styles.mainButton} 
-            onPress={handleAuth}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.mainButtonText}>
-                {isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
-              </Text>
+            {/* Şifremi Unuttum */}
+            {isLogin && (
+              <TouchableOpacity style={styles.forgotPassBtn}>
+                <Text style={styles.forgotPassText}>Şifremi Unuttum?</Text>
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
-        </View>
 
-        {/* --- Bölücü (Divider) --- */}
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>veya şununla devam et</Text>
-          <View style={styles.dividerLine} />
-        </View>
+            {/* Buton */}
+            <TouchableOpacity onPress={handleAuth} disabled={loading} activeOpacity={0.8}>
+              <LinearGradient
+                colors={['#2563EB', '#1D4ED8']}
+                style={styles.mainButton}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.mainButtonText}>
+                    {isLogin ? 'Giriş Yap' : 'Kayıt Ol'}
+                  </Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
 
-        {/* --- Sosyal Medya Butonları --- */}
-        <View style={styles.socialContainer}>
-          <TouchableOpacity 
-            style={styles.socialButton} 
-            onPress={() => handleSocialLogin('Google')}
-          >
-            <Ionicons name="logo-google" size={24} color="#DB4437" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.socialButton} 
-            onPress={() => handleSocialLogin('Apple')}
-          >
-            <Ionicons name="logo-apple" size={24} color="#000" />
-          </TouchableOpacity>
+            {/* Sosyal Medya Girişi */}
+            <View style={styles.socialSection}>
+              <View style={styles.dividerBox}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>veya</Text>
+                <View style={styles.dividerLine} />
+              </View>
 
-          <TouchableOpacity 
-            style={styles.socialButton} 
-            onPress={() => handleSocialLogin('Facebook')}
-          >
-            <Ionicons name="logo-facebook" size={24} color="#4267B2" />
-          </TouchableOpacity>
-        </View>
+              <View style={styles.socialIcons}>
+                <TouchableOpacity style={styles.socialBtn}>
+                  <Ionicons name="logo-google" size={24} color="#DB4437" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialBtn}>
+                  <Ionicons name="logo-apple" size={24} color="#000" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialBtn}>
+                  <Ionicons name="logo-facebook" size={24} color="#4267B2" />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-        {/* --- Alt Yönlendirme (Footer) --- */}
-        <View style={styles.footerContainer}>
-          <Text style={styles.footerText}>
-            {isLogin ? "Hesabınız yok mu?" : "Zaten üye misiniz?"}
-          </Text>
-          <TouchableOpacity onPress={() => setIsLogin(!isLogin)}>
-            <Text style={styles.footerActionText}>
-              {isLogin ? " Şimdi Kayıt Olun" : " Giriş Yapın"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </ScrollView>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA', // Temiz, kurumsal beyaz/gri
+    backgroundColor: '#2563EB', // Status bar arkası için
   },
-  scrollContent: {
-    flexGrow: 1,
+  // Üst Gradient Alan
+  headerBackground: {
+    height: height * 0.35, // Ekranın %35'i
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
-  },
-  
-  // Header Stilleri
-  headerContainer: {
     alignItems: 'center',
-    marginBottom: 40,
+    paddingBottom: 40,
   },
-  logoShadow: {
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10, // Android gölge
-    marginBottom: 20,
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    padding: 10,
+  logoArea: {
+    alignItems: 'center',
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    marginBottom: 10,
   },
-  welcomeText: {
+  brandName: {
     fontSize: 28,
     fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1,
+  },
+  brandSlogan: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    marginTop: 5,
+  },
+
+  // Alt Form Alanı (Kavisli Beyaz Kutu)
+  formSection: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    marginTop: -30, // Üst alanın içine girsin diye
+    paddingHorizontal: 24,
+    paddingTop: 30,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+
+  // Toggle (Giriş/Kayıt Seçici)
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 24,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  activeToggle: {
+    backgroundColor: '#fff',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#94A3B8',
+  },
+  activeToggleText: {
+    color: '#2563EB',
+    fontWeight: '700',
+  },
+
+  // Metinler
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#1E293B',
     marginBottom: 8,
     textAlign: 'center',
   },
-  subText: {
-    fontSize: 16,
+  welcomeSub: {
+    fontSize: 14,
     color: '#64748B',
     textAlign: 'center',
+    marginBottom: 30,
   },
 
-  // Form Stilleri
-  formContainer: {
-    marginBottom: 24,
-  },
+  // Inputlar
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
     borderColor: '#E2E8F0',
     borderRadius: 16,
     paddingHorizontal: 16,
     height: 56,
     marginBottom: 16,
-    // Hafif gölge
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 2,
   },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     flex: 1,
-    fontSize: 16,
-    color: '#334155',
     height: '100%',
+    color: '#334155',
+    fontSize: 16,
   },
-  forgotPasswordButton: {
+
+  // Şifremi Unuttum
+  forgotPassBtn: {
     alignSelf: 'flex-end',
     marginBottom: 24,
   },
-  forgotPasswordText: {
-    color: '#2563EB', // Marka Mavisi
-    fontWeight: '600',
+  forgotPassText: {
+    color: '#2563EB',
     fontSize: 14,
+    fontWeight: '600',
   },
+
+  // Ana Buton
   mainButton: {
-    backgroundColor: '#2563EB', // Marka Mavisi (Logo ile uyumlu)
     height: 56,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: "#2563EB",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowRadius: 8,
+    elevation: 5,
   },
   mainButtonText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontSize: 18,
     fontWeight: '700',
-    letterSpacing: 0.5,
   },
 
-  // Divider
-  dividerContainer: {
+  // Sosyal Medya
+  socialSection: {
+    marginTop: 30,
+  },
+  dividerBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   dividerLine: {
     flex: 1,
@@ -366,45 +398,24 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     color: '#94A3B8',
     fontSize: 14,
-    fontWeight: '500',
   },
-
-  // Sosyal Medya
-  socialContainer: {
+  socialIcons: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20, // Butonlar arası boşluk
-    marginBottom: 40,
+    gap: 20,
   },
-  socialButton: {
-    width: 56,
-    height: 56,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+  socialBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 3,
-  },
-
-  // Footer
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  footerText: {
-    color: '#64748B',
-    fontSize: 15,
-  },
-  footerActionText: {
-    color: '#2563EB',
-    fontWeight: '700',
-    fontSize: 15,
   },
 });
